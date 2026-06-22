@@ -1,0 +1,10 @@
+{
+  "id": "slack-message",
+  "connector": "slack-like",
+  "action": "send_message",
+  "target": "channel:demo",
+  "writes": true,
+  "payload": {
+    "text": "Fixture-only launch reminder"
+  }
+}
