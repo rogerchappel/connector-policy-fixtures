@@ -1,0 +1,10 @@
+{
+  "id": "crm-update",
+  "connector": "crm-like",
+  "action": "update_contact",
+  "target": "contact:fixture-123",
+  "writes": true,
+  "payload": {
+    "stage": "demo"
+  }
+}
