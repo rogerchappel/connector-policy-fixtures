@@ -1,0 +1,37 @@
+{
+  "name": "connector-policy-fixtures",
+  "version": "0.1.0",
+  "description": "Generate and validate offline connector action approval policy fixtures.",
+  "type": "module",
+  "bin": {
+    "connector-policy-fixtures": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && node --test test/*.test.js",
+    "check": "tsc -p tsconfig.json --noEmit",
+    "smoke": "npm run build && bash scripts/smoke.sh",
+    "validate": "bash scripts/validate.sh"
+  },
+  "keywords": [
+    "agents",
+    "skills",
+    "fixtures",
+    "release-candidate"
+  ],
+  "author": "Roger Chappel",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "dist",
+    "docs",
+    "SKILL.md",
+    "README.md"
+  ],
+  "devDependencies": {
+    "@types/node": "^26.0.0",
+    "typescript": "^5.5.4"
+  }
+}
