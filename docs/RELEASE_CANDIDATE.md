@@ -6,11 +6,11 @@ ship
 
 ## Verification
 
-- `npm test`
-- `npm run check`
-- `npm run build`
-- `npm run smoke`
-- `bash scripts/validate.sh`
+- `npm test` - pass, 2 tests
+- `npm run check` - pass
+- `npm run build` - pass
+- `npm run smoke` - pass, 6 policy cases valid
+- `bash scripts/validate.sh` - pass
 
 ## Notes
 
