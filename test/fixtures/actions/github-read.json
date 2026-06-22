@@ -1,0 +1,10 @@
+{
+  "id": "github-read",
+  "connector": "github-like",
+  "action": "list_issues",
+  "target": "repo:fixture/example",
+  "writes": false,
+  "payload": {
+    "state": "open"
+  }
+}
