@@ -11,7 +11,9 @@
     "test": "npm run build && node --test test/*.test.js",
     "check": "tsc -p tsconfig.json --noEmit",
     "smoke": "npm run build && bash scripts/smoke.sh",
-    "validate": "bash scripts/validate.sh"
+    "validate": "bash scripts/validate.sh",
+    "package:smoke": "npm pack --dry-run",
+    "release:check": "npm run check && npm test && npm run smoke && npm run validate && npm run package:smoke"
   },
   "keywords": [
     "agents",
@@ -21,6 +23,14 @@
   ],
   "author": "Roger Chappel",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rogerchappel/connector-policy-fixtures.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rogerchappel/connector-policy-fixtures/issues"
+  },
+  "homepage": "https://github.com/rogerchappel/connector-policy-fixtures#readme",
   "engines": {
     "node": ">=18"
   },
