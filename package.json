@@ -12,7 +12,7 @@
     "check": "tsc -p tsconfig.json --noEmit",
     "smoke": "npm run build && bash scripts/smoke.sh",
     "validate": "bash scripts/validate.sh",
-    "package:smoke": "npm pack --dry-run",
+    "package:smoke": "npm run build && node scripts/package-smoke.mjs",
     "release:check": "npm run check && npm test && npm run smoke && npm run validate && npm run package:smoke"
   },
   "keywords": [
@@ -38,7 +38,9 @@
     "dist",
     "docs",
     "SKILL.md",
-    "README.md"
+    "README.md",
+    "LICENSE",
+    "SECURITY.md"
   ],
   "devDependencies": {
     "@types/node": "^26.0.0",
