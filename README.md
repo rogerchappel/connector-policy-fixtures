@@ -23,6 +23,16 @@ node dist/cli.js matrix tmp/policy-cases.json --format markdown
 
 The CLI never executes connector actions and never contacts live services. Keep examples synthetic and avoid credentials, private account IDs, or production payloads.
 
+## Release Verification
+
+```bash
+npm run release:check
+```
+
+The release check runs type checks, tests, fixture smoke coverage, validation,
+and a package smoke that asserts the CLI, docs, README, license, and security
+policy are present in the npm tarball.
+
 ## Limitations
 
 V1 validates fixture shape and review coverage. It does not replace production authorization, identity checks, or connector-specific enforcement.
