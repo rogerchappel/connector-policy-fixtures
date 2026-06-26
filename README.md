@@ -19,6 +19,8 @@ node dist/cli.js matrix tmp/policy-cases.json --format markdown
 - `matrix <file> --format markdown` renders a policy decision matrix.
 - `render <file>` is an alias for `matrix`.
 
+See [docs/CLI.md](docs/CLI.md) for fixture-backed smoke commands and exit behavior.
+
 ## Safety Notes
 
 The CLI never executes connector actions and never contacts live services. Keep examples synthetic and avoid credentials, private account IDs, or production payloads.
