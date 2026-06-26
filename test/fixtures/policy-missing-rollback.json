@@ -1,0 +1,40 @@
+{
+  "schema": "connector-policy-fixtures/v1",
+  "generatedFrom": "test/fixtures/actions",
+  "checksum": "fixture",
+  "cases": [
+    {
+      "id": "read-allow",
+      "connector": "github-like",
+      "action": "list_issues",
+      "target": "repo:fixture/example",
+      "risk": "low",
+      "decision": "allow",
+      "approvalRequired": false,
+      "rollback": "No external write.",
+      "payload": {}
+    },
+    {
+      "id": "write-escalate",
+      "connector": "crm-like",
+      "action": "update_contact",
+      "target": "contact:fixture-123",
+      "risk": "medium",
+      "decision": "escalate",
+      "approvalRequired": true,
+      "rollback": "",
+      "payload": {}
+    },
+    {
+      "id": "broad-block",
+      "connector": "slack-like",
+      "action": "send_message",
+      "target": "*",
+      "risk": "high",
+      "decision": "block",
+      "approvalRequired": true,
+      "rollback": "Do not execute broad target actions.",
+      "payload": {}
+    }
+  ]
+}
