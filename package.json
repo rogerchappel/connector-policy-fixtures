@@ -40,7 +40,8 @@
     "SKILL.md",
     "README.md",
     "LICENSE",
-    "SECURITY.md"
+    "SECURITY.md",
+    "CHANGELOG.md"
   ],
   "devDependencies": {
     "@types/node": "^26.0.0",
