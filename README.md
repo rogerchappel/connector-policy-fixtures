@@ -42,5 +42,7 @@ V1 validates fixture shape and review coverage. It does not replace production a
 ## Verification
 
 ```bash
+npm run lint
 npm test
+npm run release:check
 ```
