@@ -38,3 +38,9 @@ policy are present in the npm tarball.
 ## Limitations
 
 V1 validates fixture shape and review coverage. It does not replace production authorization, identity checks, or connector-specific enforcement.
+
+## Verification
+
+```bash
+npm test
+```
