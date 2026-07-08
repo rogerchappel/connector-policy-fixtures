@@ -46,3 +46,14 @@ npm run lint
 npm test
 npm run release:check
 ```
+## Development checks
+
+Run the same local gates that CI runs before opening a PR:
+
+```bash
+npm run check --if-present
+npm run build --if-present
+npm test --if-present
+npm run smoke --if-present
+```
+
