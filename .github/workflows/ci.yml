@@ -6,6 +6,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -26,14 +29,5 @@ jobs:
             npm install
           fi
 
-      - name: Check package
-        run: npm run check --if-present
-
-      - name: Build package
-        run: npm run build --if-present
-
-      - name: Run tests
-        run: npm test --if-present
-
-      - name: Run smoke test
-        run: npm run smoke --if-present
+      - name: Run release readiness gate
+        run: npm run release:check
