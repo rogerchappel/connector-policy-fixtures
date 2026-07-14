@@ -1,9 +1,11 @@
 # Changelog
 
+All notable changes to this project will be documented in this file.
+
 ## [Unreleased]
 
+- Run the full release-readiness gate in CI, including validation and package smoke coverage.
 - Add release-readiness checks for package metadata, pack contents, and CI verification.
-All notable changes to this project will be documented in this file.
 
 ## 0.1.0 - 2026-06-29
 
