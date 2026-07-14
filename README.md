@@ -29,6 +29,7 @@ The CLI never executes connector actions and never contacts live services. Keep 
 
 ```bash
 npm run release:check
+npm pack --dry-run
 ```
 
 The release check runs type checks, tests, fixture smoke coverage, validation,
