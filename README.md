@@ -35,25 +35,8 @@ The release check runs type checks, tests, fixture smoke coverage, validation,
 and a package smoke that asserts the CLI, docs, README, license, and security
 policy are present in the npm tarball.
 
+CI runs the same `npm run release:check` gate for pull requests and pushes to `main`.
+
 ## Limitations
 
 V1 validates fixture shape and review coverage. It does not replace production authorization, identity checks, or connector-specific enforcement.
-
-## Verification
-
-```bash
-npm run lint
-npm test
-npm run release:check
-```
-## Development checks
-
-Run the same local gates that CI runs before opening a PR:
-
-```bash
-npm run check --if-present
-npm run build --if-present
-npm test --if-present
-npm run smoke --if-present
-```
-
