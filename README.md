@@ -41,3 +41,16 @@ CI runs the same `npm run release:check` gate for pull requests and pushes to `m
 ## Limitations
 
 V1 validates fixture shape and review coverage. It does not replace production authorization, identity checks, or connector-specific enforcement.
+
+## Verification
+
+Run the local gates before opening a pull request:
+
+```sh
+npm test
+npm run check
+npm run smoke
+npm run package:smoke
+npm run release:check
+```
+
