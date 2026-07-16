@@ -1,4 +1,5 @@
 import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 
 const output = execFileSync("npm", ["pack", "--dry-run", "--json"], {
   encoding: "utf8"
@@ -21,6 +22,18 @@ const required = [
 const missing = required.filter((file) => !files.has(file));
 if (missing.length) {
   console.error(`Package smoke failed; missing files:\n${missing.join("\n")}`);
+  process.exit(1);
+}
+
+const packageJson = JSON.parse(readFileSync("package.json", "utf8"));
+if (packageJson.bin?.["connector-policy-fixtures"] !== "./dist/cli.js") {
+  console.error("Package smoke failed; connector-policy-fixtures bin does not point at ./dist/cli.js");
+  process.exit(1);
+}
+
+const cliSource = readFileSync("dist/cli.js", "utf8");
+if (!cliSource.startsWith("#!/usr/bin/env node")) {
+  console.error("Package smoke failed; built CLI is missing the node shebang");
   process.exit(1);
 }
 
