@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -75,4 +75,27 @@ test("returns an error when approval cases lack rollback expectations", async ()
   assert.equal(result.code, 1);
   assert.equal(result.stdout, "");
   assert.match(result.stderr, /write-escalate: Approval-required cases need rollback expectations/);
+});
+
+test("reports fixture integrity failures through the CLI", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "connector-policy-fixtures-"));
+  const out = join(dir, "policy-cases.json");
+
+  try {
+    await runCli(["init", actionsDir, "--out", out]);
+    const fixture = JSON.parse(await readFile(out, "utf8"));
+    fixture.schema = "connector-policy-fixtures/v9";
+    fixture.checksum = "0000000000000000";
+    fixture.cases.push(fixture.cases[0]);
+    await writeFile(out, `${JSON.stringify(fixture, null, 2)}\n`);
+
+    const result = await runCli(["validate", out]);
+    assert.equal(result.code, 1);
+    assert.equal(result.stdout, "");
+    assert.match(result.stderr, /error: \*: Schema must be connector-policy-fixtures\/v1\./);
+    assert.match(result.stderr, /error: \*: Checksum does not match fixture cases; regenerate the fixture\./);
+    assert.match(result.stderr, new RegExp(`error: ${fixture.cases[0].id}: Duplicate case ID\\.`));
+  } finally {
+    await rm(dir, { force: true, recursive: true });
+  }
 });
