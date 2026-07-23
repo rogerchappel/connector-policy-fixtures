@@ -38,11 +38,14 @@ export interface ValidationIssue {
   message: string;
 }
 
+const FIXTURE_SCHEMA: PolicyFixture["schema"] = "connector-policy-fixtures/v1";
+const CHECKSUM_PATTERN = /^[0-9a-f]{16}$/;
+
 export function initFixture(actionsDir: string): PolicyFixture {
   const manifests = readManifests(actionsDir);
   const cases = manifests.flatMap((manifest) => buildCases(manifest));
   return {
-    schema: "connector-policy-fixtures/v1",
+    schema: FIXTURE_SCHEMA,
     generatedFrom: actionsDir,
     checksum: checksum(cases),
     cases
@@ -51,6 +54,29 @@ export function initFixture(actionsDir: string): PolicyFixture {
 
 export function validateFixture(fixture: PolicyFixture): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
+  if (fixture.schema !== FIXTURE_SCHEMA) {
+    issues.push({ level: "error", caseId: "*", message: `Schema must be ${FIXTURE_SCHEMA}.` });
+  }
+  if (!CHECKSUM_PATTERN.test(fixture.checksum)) {
+    issues.push({ level: "error", caseId: "*", message: "Checksum must be 16 lowercase hexadecimal characters." });
+  } else if (fixture.checksum !== checksum(fixture.cases)) {
+    issues.push({
+      level: "error",
+      caseId: "*",
+      message: "Checksum does not match fixture cases; regenerate the fixture."
+    });
+  }
+
+  const seenCaseIds = new Set<string>();
+  const reportedDuplicateIds = new Set<string>();
+  for (const item of fixture.cases) {
+    if (seenCaseIds.has(item.id) && !reportedDuplicateIds.has(item.id)) {
+      issues.push({ level: "error", caseId: item.id, message: "Duplicate case ID." });
+      reportedDuplicateIds.add(item.id);
+    }
+    seenCaseIds.add(item.id);
+  }
+
   const decisions = new Set(fixture.cases.map((item) => item.decision));
   for (const decision of ["allow", "block", "escalate"] as const) {
     if (!decisions.has(decision)) {
