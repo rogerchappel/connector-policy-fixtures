@@ -15,11 +15,15 @@ node dist/cli.js matrix tmp/policy-cases.json --format markdown
 ## CLI
 
 - `init <actions-dir> --out <file>` creates starter policy cases from local action manifests.
-- `validate <file>` checks coverage, rollback requirements, broad targets, and secret-looking payloads.
+- `validate <file>` checks the schema, case checksum, unique case IDs, decision coverage, rollback requirements, broad targets, and secret-looking payloads.
 - `matrix <file> --format markdown` renders a policy decision matrix.
 - `render <file>` is an alias for `matrix`.
 
 See [docs/CLI.md](docs/CLI.md) for fixture-backed smoke commands and exit behavior.
+
+Fixtures include a checksum of their `cases` array. If cases are edited, regenerate
+the fixture with `init`; `validate` rejects stale or malformed checksums rather than
+silently accepting hand-edited integrity metadata.
 
 ## Safety Notes
 
@@ -40,7 +44,7 @@ CI runs the same `npm run release:check` gate for pull requests and pushes to `m
 
 ## Limitations
 
-V1 validates fixture shape and review coverage. It does not replace production authorization, identity checks, or connector-specific enforcement.
+V1 validates fixture integrity and review coverage. It does not replace production authorization, identity checks, or connector-specific enforcement.
 
 ## Verification
 
@@ -53,4 +57,3 @@ npm run smoke
 npm run package:smoke
 npm run release:check
 ```
-
