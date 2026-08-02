@@ -47,6 +47,37 @@ test("rejects duplicate case IDs", () => {
   ));
 });
 
+test("reports deterministic issues for malformed fixture shapes", () => {
+  assert.deepEqual(validateFixture(null), [
+    { level: "error", caseId: "*", message: "Fixture must be a JSON object." }
+  ]);
+
+  assert.deepEqual(validateFixture({ schema: 1, checksum: null }), [
+    { level: "error", caseId: "*", message: "Schema must be connector-policy-fixtures/v1." },
+    { level: "error", caseId: "*", message: "Generated-from path must be a string." },
+    { level: "error", caseId: "*", message: "Checksum must be 16 lowercase hexadecimal characters." },
+    { level: "error", caseId: "*", message: "Cases must be an array." }
+  ]);
+});
+
+test("reports missing and wrongly typed required case fields", () => {
+  const issues = validateFixture({
+    schema: "connector-policy-fixtures/v1",
+    checksum: "0000000000000000",
+    cases: [null, { id: "bad-case", connector: 3, action: "read", target: "item", risk: "urgent", decision: "permit", approvalRequired: "no", rollback: false, payload: [] }]
+  });
+
+  assert.ok(issues.some((issue) => issue.caseId === "[0]" && issue.message === "Case must be a JSON object."));
+  for (const message of [
+    "Case field connector must be a string.",
+    "Case field risk must be low, medium, or high.",
+    "Case field decision must be allow, block, or escalate.",
+    "Case field approvalRequired must be a boolean.",
+    "Case field rollback must be a string.",
+    "Case field payload must be a JSON object."
+  ]) assert.ok(issues.some((issue) => issue.caseId === "bad-case" && issue.message === message));
+});
+
 test("built package bin keeps the node shebang", () => {
   const cli = readFileSync("dist/cli.js", "utf8");
   assert.ok(cli.startsWith("#!/usr/bin/env node"));

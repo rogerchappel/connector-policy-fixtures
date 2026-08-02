@@ -22,13 +22,13 @@ export async function main(argv: string[]): Promise<void> {
   }
 
   if (command === "validate") {
-    const fixture = readFixture(target);
+    const fixture: unknown = readFixture(target);
     const issues = validateFixture(fixture);
     for (const issue of issues) {
       console.error(`${issue.level}: ${issue.caseId}: ${issue.message}`);
     }
     if (issues.some((issue) => issue.level === "error")) process.exitCode = 1;
-    if (issues.length === 0) console.log(`Policy fixture valid: ${fixture.cases.length} cases.`);
+    if (issues.length === 0) console.log(`Policy fixture valid: ${(fixture as PolicyFixture).cases.length} cases.`);
     return;
   }
 
