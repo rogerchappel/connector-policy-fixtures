@@ -99,3 +99,24 @@ test("reports fixture integrity failures through the CLI", async () => {
     await rm(dir, { force: true, recursive: true });
   }
 });
+
+test("reports malformed fixture shapes without internal errors", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "connector-policy-fixtures-"));
+  try {
+    for (const [name, fixture, expected] of [
+      ["array.json", [], /Fixture must be a JSON object/],
+      ["missing-cases.json", {}, /Cases must be an array/],
+      ["bad-case.json", { schema: "connector-policy-fixtures\/v1", checksum: "0000000000000000", cases: [{}] }, /Case field id must be a string/]
+    ]) {
+      const path = join(dir, name);
+      await writeFile(path, `${JSON.stringify(fixture)}\n`);
+      const result = await runCli(["validate", path]);
+      assert.equal(result.code, 1);
+      assert.equal(result.stdout, "");
+      assert.match(result.stderr, expected);
+      assert.doesNotMatch(result.stderr, /TypeError|not iterable/);
+    }
+  } finally {
+    await rm(dir, { force: true, recursive: true });
+  }
+});

@@ -52,14 +52,33 @@ export function initFixture(actionsDir: string): PolicyFixture {
   };
 }
 
-export function validateFixture(fixture: PolicyFixture): ValidationIssue[] {
+export function validateFixture(fixture: unknown): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
+  if (!isRecord(fixture)) {
+    return [{ level: "error", caseId: "*", message: "Fixture must be a JSON object." }];
+  }
   if (fixture.schema !== FIXTURE_SCHEMA) {
     issues.push({ level: "error", caseId: "*", message: `Schema must be ${FIXTURE_SCHEMA}.` });
   }
-  if (!CHECKSUM_PATTERN.test(fixture.checksum)) {
+  if (typeof fixture.generatedFrom !== "string") {
+    issues.push({ level: "error", caseId: "*", message: "Generated-from path must be a string." });
+  }
+  if (typeof fixture.checksum !== "string" || !CHECKSUM_PATTERN.test(fixture.checksum)) {
     issues.push({ level: "error", caseId: "*", message: "Checksum must be 16 lowercase hexadecimal characters." });
-  } else if (fixture.checksum !== checksum(fixture.cases)) {
+  }
+  if (!Array.isArray(fixture.cases)) {
+    issues.push({ level: "error", caseId: "*", message: "Cases must be an array." });
+    return issues;
+  }
+
+  const cases: PolicyCase[] = [];
+  fixture.cases.forEach((item, index) => {
+    const caseIssues = validateCaseShape(item, index);
+    issues.push(...caseIssues);
+    if (caseIssues.length === 0) cases.push(item as unknown as PolicyCase);
+  });
+
+  if (typeof fixture.checksum === "string" && CHECKSUM_PATTERN.test(fixture.checksum) && fixture.checksum !== checksum(fixture.cases)) {
     issues.push({
       level: "error",
       caseId: "*",
@@ -69,7 +88,7 @@ export function validateFixture(fixture: PolicyFixture): ValidationIssue[] {
 
   const seenCaseIds = new Set<string>();
   const reportedDuplicateIds = new Set<string>();
-  for (const item of fixture.cases) {
+  for (const item of cases) {
     if (seenCaseIds.has(item.id) && !reportedDuplicateIds.has(item.id)) {
       issues.push({ level: "error", caseId: item.id, message: "Duplicate case ID." });
       reportedDuplicateIds.add(item.id);
@@ -77,13 +96,13 @@ export function validateFixture(fixture: PolicyFixture): ValidationIssue[] {
     seenCaseIds.add(item.id);
   }
 
-  const decisions = new Set(fixture.cases.map((item) => item.decision));
+  const decisions = new Set(cases.map((item) => item.decision));
   for (const decision of ["allow", "block", "escalate"] as const) {
     if (!decisions.has(decision)) {
       issues.push({ level: "error", caseId: "*", message: `Missing ${decision} coverage.` });
     }
   }
-  for (const item of fixture.cases) {
+  for (const item of cases) {
     if (item.approvalRequired && item.rollback.trim().length === 0) {
       issues.push({ level: "error", caseId: item.id, message: "Approval-required cases need rollback expectations." });
     }
@@ -95,6 +114,38 @@ export function validateFixture(fixture: PolicyFixture): ValidationIssue[] {
     }
   }
   return issues;
+}
+
+function validateCaseShape(value: unknown, index: number): ValidationIssue[] {
+  const caseId = isRecord(value) && typeof value.id === "string" ? value.id : `[${index}]`;
+  if (!isRecord(value)) {
+    return [{ level: "error", caseId, message: "Case must be a JSON object." }];
+  }
+
+  const issues: ValidationIssue[] = [];
+  const stringFields = ["id", "connector", "action", "target", "rollback"] as const;
+  for (const field of stringFields) {
+    if (typeof value[field] !== "string") {
+      issues.push({ level: "error", caseId, message: `Case field ${field} must be a string.` });
+    }
+  }
+  if (!(["low", "medium", "high"] as unknown[]).includes(value.risk)) {
+    issues.push({ level: "error", caseId, message: "Case field risk must be low, medium, or high." });
+  }
+  if (!(["allow", "block", "escalate"] as unknown[]).includes(value.decision)) {
+    issues.push({ level: "error", caseId, message: "Case field decision must be allow, block, or escalate." });
+  }
+  if (typeof value.approvalRequired !== "boolean") {
+    issues.push({ level: "error", caseId, message: "Case field approvalRequired must be a boolean." });
+  }
+  if (!isRecord(value.payload)) {
+    issues.push({ level: "error", caseId, message: "Case field payload must be a JSON object." });
+  }
+  return issues;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
 export function renderMatrix(fixture: PolicyFixture): string {
