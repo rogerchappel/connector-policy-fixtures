@@ -25,6 +25,13 @@ Fixtures include a checksum of their `cases` array. If cases are edited, regener
 the fixture with `init`; `validate` rejects stale or malformed checksums rather than
 silently accepting hand-edited integrity metadata.
 
+The validation input must be a JSON object with string `schema`, `generatedFrom`,
+and `checksum` fields plus a `cases` array. Each case requires string `id`, `connector`, `action`, `target`,
+and `rollback` fields; a `risk` of `low`, `medium`, or `high`; a `decision` of
+`allow`, `block`, or `escalate`; a boolean `approvalRequired`; and an object
+`payload`. Malformed shapes produce stable validation issues and exit status 1,
+rather than JavaScript type or iteration errors.
+
 ## Safety Notes
 
 The CLI never executes connector actions and never contacts live services. Keep examples synthetic and avoid credentials, private account IDs, or production payloads.
