@@ -4,6 +4,7 @@
 connector-policy-fixtures init <actions-dir> --out <policy-cases.json>
 connector-policy-fixtures validate <policy-cases.json>
 connector-policy-fixtures matrix <policy-cases.json> --format markdown
+connector-policy-fixtures render <policy-cases.json>
 ```
 
 Fixture-backed smoke commands:
@@ -20,6 +21,11 @@ node dist/cli.js validate test/fixtures/policy-missing-rollback.json
 `connector-policy-fixtures/v1` schema, its 16-character checksum matches the
 `cases` array, and every case ID is unique. It also checks decision coverage,
 rollback expectations, broad targets, and secret-looking values.
+
+`matrix` and its `render` alias run the same validation before rendering. If
+any error-level issue is found, they print the same deterministic issue format
+as `validate`, exit with status 1, and do not emit a partial matrix. Warnings do
+not prevent rendering.
 
 The accepted fixture is a JSON object with string `schema`, `generatedFrom`,
 and `checksum` fields plus a `cases` array. Every case has string `id`,
