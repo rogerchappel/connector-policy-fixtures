@@ -78,6 +78,20 @@ test("reports missing and wrongly typed required case fields", () => {
   ]) assert.ok(issues.some((issue) => issue.caseId === "bad-case" && issue.message === message));
 });
 
+test("matrix rendering rejects invalid fixtures with deterministic validation issues", () => {
+  const fixture = initFixture("test/fixtures/actions");
+  assert.throws(
+    () => renderMatrix({ ...fixture, checksum: "0000000000000000" }),
+    /error: \*: Checksum does not match fixture cases; regenerate the fixture\./
+  );
+  assert.throws(
+    () => renderMatrix({ ...fixture, cases: "wrong" }),
+    (error) => error.name === "FixtureValidationError"
+      && /error: \*: Cases must be an array\./.test(error.message)
+      && !/TypeError/.test(error.message)
+  );
+});
+
 test("built package bin keeps the node shebang", () => {
   const cli = readFileSync("dist/cli.js", "utf8");
   assert.ok(cli.startsWith("#!/usr/bin/env node"));
