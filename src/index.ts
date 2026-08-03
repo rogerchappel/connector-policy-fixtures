@@ -38,6 +38,17 @@ export interface ValidationIssue {
   message: string;
 }
 
+export class FixtureValidationError extends Error {
+  constructor(public readonly issues: ValidationIssue[]) {
+    super(formatValidationIssues(issues));
+    this.name = "FixtureValidationError";
+  }
+}
+
+export function formatValidationIssues(issues: ValidationIssue[]): string {
+  return issues.map((issue) => `${issue.level}: ${issue.caseId}: ${issue.message}`).join("\n");
+}
+
 const FIXTURE_SCHEMA: PolicyFixture["schema"] = "connector-policy-fixtures/v1";
 const CHECKSUM_PATTERN = /^[0-9a-f]{16}$/;
 
@@ -148,7 +159,12 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
-export function renderMatrix(fixture: PolicyFixture): string {
+export function renderMatrix(input: unknown): string {
+  const issues = validateFixture(input);
+  if (issues.some((issue) => issue.level === "error")) {
+    throw new FixtureValidationError(issues);
+  }
+  const fixture = input as PolicyFixture;
   const rows = fixture.cases.map((item) => {
     return `| ${item.id} | ${item.connector} | ${item.action} | ${item.target} | ${item.risk} | ${item.decision} | ${item.approvalRequired ? "yes" : "no"} | ${item.rollback || "-"} |`;
   });
