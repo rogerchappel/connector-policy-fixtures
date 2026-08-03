@@ -69,6 +69,30 @@ test("renders a markdown policy matrix through the CLI", async () => {
   }
 });
 
+test("matrix and render reject invalid fixtures without emitting a matrix", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "connector-policy-fixtures-"));
+  try {
+    for (const [name, fixture, expected] of [
+      ["checksum.json", { schema: "connector-policy-fixtures/v1", generatedFrom: "test", checksum: "0000000000000000", cases: [] }, /Checksum does not match fixture cases/],
+      ["empty.json", { schema: "connector-policy-fixtures/v1", generatedFrom: "test", checksum: "4f53cda18c2baa0c", cases: [] }, /Missing allow coverage/],
+      ["wrong-type.json", { schema: "connector-policy-fixtures/v1", generatedFrom: "test", checksum: "0000000000000000", cases: "wrong" }, /Cases must be an array/]
+    ]) {
+      const path = join(dir, name);
+      await writeFile(path, `${JSON.stringify(fixture)}\n`);
+      for (const command of ["matrix", "render"]) {
+        const result = await runCli([command, path]);
+        assert.equal(result.code, 1);
+        assert.equal(result.stdout, "");
+        assert.match(result.stderr, expected);
+        assert.match(result.stderr, /^error: /);
+        assert.doesNotMatch(result.stderr, /TypeError|Connector Policy Matrix/);
+      }
+    }
+  } finally {
+    await rm(dir, { force: true, recursive: true });
+  }
+});
+
 test("returns an error when approval cases lack rollback expectations", async () => {
   const result = await runCli(["validate", missingRollback]);
 

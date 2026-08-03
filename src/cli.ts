@@ -2,7 +2,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { initFixture, renderMatrix, validateFixture, type PolicyFixture } from "./index.js";
+import { formatValidationIssues, initFixture, renderMatrix, validateFixture, type PolicyFixture } from "./index.js";
 
 export async function main(argv: string[]): Promise<void> {
   const [command, target, ...rest] = argv;
@@ -24,9 +24,7 @@ export async function main(argv: string[]): Promise<void> {
   if (command === "validate") {
     const fixture: unknown = readFixture(target);
     const issues = validateFixture(fixture);
-    for (const issue of issues) {
-      console.error(`${issue.level}: ${issue.caseId}: ${issue.message}`);
-    }
+    if (issues.length > 0) console.error(formatValidationIssues(issues));
     if (issues.some((issue) => issue.level === "error")) process.exitCode = 1;
     if (issues.length === 0) console.log(`Policy fixture valid: ${(fixture as PolicyFixture).cases.length} cases.`);
     return;
@@ -40,8 +38,8 @@ export async function main(argv: string[]): Promise<void> {
   throw new Error(`Unknown command: ${command}`);
 }
 
-function readFixture(path: string): PolicyFixture {
-  return JSON.parse(readFileSync(path, "utf8")) as PolicyFixture;
+function readFixture(path: string): unknown {
+  return JSON.parse(readFileSync(path, "utf8"));
 }
 
 function option(args: string[], name: string): string | undefined {
@@ -50,7 +48,7 @@ function option(args: string[], name: string): string | undefined {
 }
 
 function printHelp(): void {
-  console.log(`connector-policy-fixtures init <actions-dir> --out <file>\nconnector-policy-fixtures validate <policy-cases.json>\nconnector-policy-fixtures matrix <policy-cases.json> --format markdown`);
+  console.log(`connector-policy-fixtures init <actions-dir> --out <file>\nconnector-policy-fixtures validate <policy-cases.json>\nconnector-policy-fixtures matrix <policy-cases.json> --format markdown\nconnector-policy-fixtures render <policy-cases.json>\n\nmatrix and render validate fixtures before producing output.`);
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
