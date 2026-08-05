@@ -3,9 +3,16 @@
 ```bash
 connector-policy-fixtures init <actions-dir> --out <policy-cases.json>
 connector-policy-fixtures validate <policy-cases.json>
-connector-policy-fixtures matrix <policy-cases.json> --format markdown
+connector-policy-fixtures matrix <policy-cases.json> [--format markdown]
 connector-policy-fixtures render <policy-cases.json>
 ```
+
+Each command accepts exactly one target. `init` requires one `--out <file>`;
+`matrix` accepts at most one `--format markdown`; and `validate` and `render`
+accept no options. An accepted option can appear before or after the target.
+Unknown options, duplicate options, missing option values, extra targets, and
+matrix formats other than `markdown` fail before any input is read or output is
+written.
 
 Fixture-backed smoke commands:
 
