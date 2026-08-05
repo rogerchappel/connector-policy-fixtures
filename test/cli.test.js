@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { access, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -64,6 +64,45 @@ test("renders a markdown policy matrix through the CLI", async () => {
     assert.equal(matrix.code, 0);
     assert.match(matrix.stdout, /# Connector Policy Matrix/);
     assert.match(matrix.stdout, /crm-update-broad-target/);
+  } finally {
+    await rm(dir, { force: true, recursive: true });
+  }
+});
+
+test("accepts init and matrix options on either side of the target", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "connector-policy-fixtures-"));
+  const out = join(dir, "policy-cases.json");
+  try {
+    const init = await runCli(["init", "--out", out, actionsDir]);
+    assert.equal(init.code, 0);
+    const matrix = await runCli(["matrix", "--format", "markdown", out]);
+    assert.equal(matrix.code, 0);
+    assert.match(matrix.stdout, /# Connector Policy Matrix/);
+  } finally {
+    await rm(dir, { force: true, recursive: true });
+  }
+});
+
+test("rejects invalid command arguments before reading or writing files", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "connector-policy-fixtures-"));
+  const missing = join(dir, "missing.json");
+  const output = join(dir, "output.json");
+  try {
+    for (const [args, expected] of [
+      [["validate", missing, "extra"], "Unexpected argument for validate: extra.\n"],
+      [["validate", missing, "--verbose"], "Unknown option for validate: --verbose.\n"],
+      [["init", actionsDir, "--out", output, "--out", join(dir, "second.json")], "Duplicate option for init: --out.\n"],
+      [["init", actionsDir, "--out"], "Missing value for --out.\n"],
+      [["matrix", missing, "--format", "json"], "Unsupported matrix format: json. Expected markdown.\n"],
+      [["matrix", missing, "--format", "markdown", "--format", "markdown"], "Duplicate option for matrix: --format.\n"],
+      [["render", missing, "--format", "markdown"], "Unknown option for render: --format.\n"]
+    ]) {
+      const result = await runCli(args);
+      assert.equal(result.code, 1);
+      assert.equal(result.stdout, "");
+      assert.equal(result.stderr, expected);
+    }
+    await assert.rejects(access(output));
   } finally {
     await rm(dir, { force: true, recursive: true });
   }
