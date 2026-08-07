@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { access, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { access, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -48,6 +48,24 @@ test("initializes and validates policy cases through the CLI", async () => {
     const validate = await runCli(["validate", out]);
     assert.equal(validate.code, 0);
     assert.match(validate.stdout, /Policy fixture valid: 6 cases/);
+  } finally {
+    await rm(dir, { force: true, recursive: true });
+  }
+});
+
+test("init rejects malformed manifests without creating output", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "connector-policy-fixtures-"));
+  const manifests = join(dir, "actions");
+  const out = join(dir, "nested", "policy-cases.json");
+  try {
+    await mkdir(manifests);
+    await writeFile(join(manifests, "bad.json"), JSON.stringify({ id: "bad", connector: "test", action: "write", target: "item", writes: false, payload: [] }));
+
+    const result = await runCli(["init", manifests, "--out", out]);
+    assert.equal(result.code, 1);
+    assert.equal(result.stdout, "");
+    assert.equal(result.stderr, `Invalid action manifest ${join(manifests, "bad.json")}: field payload must be a JSON object when provided.\n`);
+    await assert.rejects(access(out));
   } finally {
     await rm(dir, { force: true, recursive: true });
   }

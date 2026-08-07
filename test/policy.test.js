@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { test } from "node:test";
 import { initFixture, renderMatrix, validateFixture } from "../dist/index.js";
 
@@ -8,6 +10,41 @@ test("generates policy cases from local manifests", () => {
   assert.equal(fixture.cases.length, 6);
   assert.equal(validateFixture(fixture).filter((issue) => issue.level === "error").length, 0);
   assert.match(renderMatrix(fixture), /Connector Policy Matrix/);
+});
+
+test("rejects malformed action manifests with deterministic file and field diagnostics", () => {
+  const dir = mkdtempSync(join(tmpdir(), "connector-policy-manifests-"));
+  try {
+    for (const [value, expected] of [
+      [[], "manifest must be a JSON object"],
+      [{ connector: "github", action: "read", target: "issue", writes: false }, "field id must be a string"],
+      [{ id: "read", connector: 1, action: "read", target: "issue", writes: false }, "field connector must be a string"],
+      [{ id: "read", connector: "github", action: null, target: "issue", writes: false }, "field action must be a string"],
+      [{ id: "read", connector: "github", action: "read", target: true, writes: false }, "field target must be a string"],
+      [{ id: "read", connector: "github", action: "read", target: "issue", writes: "no" }, "field writes must be a boolean"],
+      [{ id: "read", connector: "github", action: "read", target: "issue", writes: false, payload: [] }, "field payload must be a JSON object when provided"]
+    ]) {
+      const path = join(dir, "bad.json");
+      writeFileSync(path, JSON.stringify(value));
+      assert.throws(() => initFixture(dir), new RegExp(`Invalid action manifest ${path.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&")}: ${expected}\\.`));
+    }
+  } finally {
+    rmSync(dir, { force: true, recursive: true });
+  }
+});
+
+test("identifies the source file when an action manifest is not valid JSON", () => {
+  const dir = mkdtempSync(join(tmpdir(), "connector-policy-manifests-"));
+  const path = join(dir, "broken.json");
+  try {
+    writeFileSync(path, "{");
+    assert.throws(
+      () => initFixture(dir),
+      (error) => error.message === `Invalid action manifest ${path}: file must contain valid JSON.`
+    );
+  } finally {
+    rmSync(dir, { force: true, recursive: true });
+  }
 });
 
 test("flags secret-looking payloads", () => {
