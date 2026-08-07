@@ -214,7 +214,33 @@ function readManifests(dir: string): ActionManifest[] {
   return readdirSync(dir)
     .filter((entry) => entry.endsWith(".json"))
     .sort()
-    .map((entry) => JSON.parse(readFileSync(join(dir, entry), "utf8")) as ActionManifest);
+    .map((entry) => {
+      const path = join(dir, entry);
+      let value: unknown;
+      try {
+        value = JSON.parse(readFileSync(path, "utf8"));
+      } catch {
+        throw new Error(`Invalid action manifest ${path}: file must contain valid JSON.`);
+      }
+      validateActionManifest(value, path);
+      return value;
+    });
+}
+
+function validateActionManifest(value: unknown, path: string): asserts value is ActionManifest {
+  if (!isRecord(value)) throw new Error(`Invalid action manifest ${path}: manifest must be a JSON object.`);
+
+  for (const field of ["id", "connector", "action", "target"] as const) {
+    if (typeof value[field] !== "string") {
+      throw new Error(`Invalid action manifest ${path}: field ${field} must be a string.`);
+    }
+  }
+  if (typeof value.writes !== "boolean") {
+    throw new Error(`Invalid action manifest ${path}: field writes must be a boolean.`);
+  }
+  if (value.payload !== undefined && !isRecord(value.payload)) {
+    throw new Error(`Invalid action manifest ${path}: field payload must be a JSON object when provided.`);
+  }
 }
 
 function isBroadTarget(target: string): boolean {
