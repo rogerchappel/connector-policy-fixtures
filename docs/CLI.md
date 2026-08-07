@@ -14,6 +14,13 @@ Unknown options, duplicate options, missing option values, extra targets, and
 matrix formats other than `markdown` fail before any input is read or output is
 written.
 
+Every `.json` file in the `init` actions directory must contain one JSON object
+with string `id`, `connector`, `action`, and `target` fields and a boolean
+`writes` field. `payload` is optional and must be a JSON object when present.
+Manifests are read in filename order and all are validated before the output
+directory or file is created. A malformed manifest fails with status 1 and a
+deterministic diagnostic naming the source file and first invalid field.
+
 Fixture-backed smoke commands:
 
 ```bash

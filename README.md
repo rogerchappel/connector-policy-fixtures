@@ -21,6 +21,11 @@ node dist/cli.js matrix tmp/policy-cases.json --format markdown
 
 See [docs/CLI.md](docs/CLI.md) for fixture-backed smoke commands and exit behavior.
 
+Each `init` input must be a JSON object with string `id`, `connector`, `action`,
+and `target` fields and a boolean `writes` field. An optional `payload` must be a
+JSON object. `init` validates every manifest before creating its output; an
+invalid manifest exits with status 1 and identifies its source file and field.
+
 Fixtures include a checksum of their `cases` array. If cases are edited, regenerate
 the fixture with `init`; `validate` rejects stale or malformed checksums rather than
 silently accepting hand-edited integrity metadata.

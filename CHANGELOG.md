@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- Validate action manifests before generating or writing policy fixtures.
 - Preserve the Node shebang in the built CLI and assert it in tests/package smoke.
 - Run the full release-readiness gate in CI, including validation and package smoke coverage.
 - Add release-readiness checks for package metadata, pack contents, and CI verification.
