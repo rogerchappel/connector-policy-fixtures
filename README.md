@@ -26,6 +26,12 @@ and `target` fields and a boolean `writes` field. An optional `payload` must be 
 JSON object. `init` validates every manifest before creating its output; an
 invalid manifest exits with status 1 and identifies its source file and field.
 
+`init` always produces allow, block, and escalate decision coverage for a
+non-empty valid actions directory. When every manifest has the same `writes`
+value, it appends one deterministic `coverage-allow` or `coverage-escalate`
+case; mixed read/write directories keep their existing per-manifest cases.
+The generated fixture is therefore ready for an immediate `validate` command.
+
 Fixtures include a checksum of their `cases` array. If cases are edited, regenerate
 the fixture with `init`; `validate` rejects stale or malformed checksums rather than
 silently accepting hand-edited integrity metadata.

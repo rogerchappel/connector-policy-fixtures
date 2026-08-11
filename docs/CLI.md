@@ -21,6 +21,12 @@ Manifests are read in filename order and all are validated before the output
 directory or file is created. A malformed manifest fails with status 1 and a
 deterministic diagnostic naming the source file and first invalid field.
 
+For every non-empty valid actions directory, `init` guarantees the decision
+coverage required by `validate`: allow, block, and escalate. A homogeneous
+directory receives one deterministic aggregate coverage case for its missing
+allow or escalate decision. Mixed read/write inputs retain the normal two
+cases per manifest without an aggregate case.
+
 Fixture-backed smoke commands:
 
 ```bash
@@ -35,6 +41,8 @@ node dist/cli.js validate test/fixtures/policy-missing-rollback.json
 `connector-policy-fixtures/v1` schema, its 16-character checksum matches the
 `cases` array, and every case ID is unique. It also checks decision coverage,
 rollback expectations, broad targets, and secret-looking values.
+The decision coverage invariant requires at least one allow, one block, and
+one escalate case across the fixture.
 
 `matrix` and its `render` alias run the same validation before rendering. If
 any error-level issue is found, they print the same deterministic issue format
