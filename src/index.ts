@@ -54,12 +54,40 @@ const CHECKSUM_PATTERN = /^[0-9a-f]{16}$/;
 
 export function initFixture(actionsDir: string): PolicyFixture {
   const manifests = readManifests(actionsDir);
-  const cases = manifests.flatMap((manifest) => buildCases(manifest));
+  const cases = ensureDecisionCoverage(
+    manifests.flatMap((manifest) => buildCases(manifest)),
+    manifests[0]
+  );
   return {
     schema: FIXTURE_SCHEMA,
     generatedFrom: actionsDir,
     checksum: checksum(cases),
     cases
+  };
+}
+
+function ensureDecisionCoverage(cases: PolicyCase[], manifest: ActionManifest | undefined): PolicyCase[] {
+  if (!manifest) return cases;
+  const decisions = new Set(cases.map((item) => item.decision));
+  if (!decisions.has("allow")) return [...cases, buildCoverageCase(manifest, "allow")];
+  if (!decisions.has("escalate")) return [...cases, buildCoverageCase(manifest, "escalate")];
+  return cases;
+}
+
+function buildCoverageCase(manifest: ActionManifest, decision: "allow" | "escalate"): PolicyCase {
+  const approvalRequired = decision === "escalate";
+  return {
+    id: `${manifest.id}-coverage-${decision}`,
+    connector: manifest.connector,
+    action: manifest.action,
+    target: manifest.target,
+    risk: decision === "allow" ? "low" : "medium",
+    decision,
+    approvalRequired,
+    rollback: approvalRequired
+      ? "Undo the local fixture action or restore prior field value."
+      : manifest.writes ? "Restore the prior field value after the allowed test case." : "No external write.",
+    payload: manifest.payload ?? {}
   };
 }
 
