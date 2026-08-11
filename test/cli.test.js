@@ -53,6 +53,35 @@ test("initializes and validates policy cases through the CLI", async () => {
   }
 });
 
+test("initializes immediately valid fixtures for homogeneous action directories", async () => {
+  for (const writes of [false, true]) {
+    const dir = await mkdtemp(join(tmpdir(), "connector-policy-homogeneous-"));
+    const manifests = join(dir, "actions");
+    const out = join(dir, "policy-cases.json");
+    try {
+      await mkdir(manifests);
+      await writeFile(join(manifests, "action.json"), JSON.stringify({
+        id: writes ? "write-action" : "read-action",
+        connector: "example",
+        action: writes ? "update" : "read",
+        target: "record",
+        writes
+      }));
+
+      const init = await runCli(["init", manifests, "--out", out]);
+      assert.equal(init.code, 0);
+      assert.equal(init.stderr, "");
+
+      const validate = await runCli(["validate", out]);
+      assert.equal(validate.code, 0);
+      assert.match(validate.stdout, /Policy fixture valid: 3 cases/);
+      assert.equal(validate.stderr, "");
+    } finally {
+      await rm(dir, { force: true, recursive: true });
+    }
+  }
+});
+
 test("init rejects malformed manifests without creating output", async () => {
   const dir = await mkdtemp(join(tmpdir(), "connector-policy-fixtures-"));
   const manifests = join(dir, "actions");

@@ -12,6 +12,30 @@ test("generates policy cases from local manifests", () => {
   assert.match(renderMatrix(fixture), /Connector Policy Matrix/);
 });
 
+test("adds deterministic decision coverage for homogeneous action manifests", () => {
+  for (const [writes, missingDecision] of [[false, "escalate"], [true, "allow"]]) {
+    const dir = mkdtempSync(join(tmpdir(), "connector-policy-homogeneous-"));
+    try {
+      writeFileSync(join(dir, "action.json"), JSON.stringify({
+        id: writes ? "write-action" : "read-action",
+        connector: "example",
+        action: writes ? "update" : "read",
+        target: "record",
+        writes
+      }));
+
+      const first = initFixture(dir);
+      const second = initFixture(dir);
+      assert.deepEqual(second, first);
+      assert.deepEqual(new Set(first.cases.map((item) => item.decision)), new Set(["allow", "block", "escalate"]));
+      assert.equal(first.cases.filter((item) => item.decision === missingDecision).length, 1);
+      assert.equal(validateFixture(first).filter((issue) => issue.level === "error").length, 0);
+    } finally {
+      rmSync(dir, { force: true, recursive: true });
+    }
+  }
+});
+
 test("rejects malformed action manifests with deterministic file and field diagnostics", () => {
   const dir = mkdtempSync(join(tmpdir(), "connector-policy-manifests-"));
   try {
