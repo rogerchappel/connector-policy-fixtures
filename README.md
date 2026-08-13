@@ -21,8 +21,9 @@ node dist/cli.js matrix tmp/policy-cases.json --format markdown
 
 See [docs/CLI.md](docs/CLI.md) for fixture-backed smoke commands and exit behavior.
 
-Each `init` input must be a JSON object with string `id`, `connector`, `action`,
-and `target` fields and a boolean `writes` field. An optional `payload` must be a
+Each `init` input must be a JSON object with non-empty string `id`, `connector`,
+`action`, and `target` fields and a boolean `writes` field. Whitespace-only strings
+are empty. An optional `payload` must be a
 JSON object. `init` validates every manifest before creating its output; an
 invalid manifest exits with status 1 and identifies its source file and field.
 
@@ -36,9 +37,9 @@ Fixtures include a checksum of their `cases` array. If cases are edited, regener
 the fixture with `init`; `validate` rejects stale or malformed checksums rather than
 silently accepting hand-edited integrity metadata.
 
-The validation input must be a JSON object with string `schema`, `generatedFrom`,
+The validation input must be a JSON object with string `schema`, non-empty string `generatedFrom`,
 and `checksum` fields plus a `cases` array. Each case requires string `id`, `connector`, `action`, `target`,
-and `rollback` fields; a `risk` of `low`, `medium`, or `high`; a `decision` of
+and `rollback` fields, all of which must be non-empty; a `risk` of `low`, `medium`, or `high`; a `decision` of
 `allow`, `block`, or `escalate`; a boolean `approvalRequired`; and an object
 `payload`. Malformed shapes produce stable validation issues and exit status 1,
 rather than JavaScript type or iteration errors.

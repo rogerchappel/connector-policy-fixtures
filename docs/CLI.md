@@ -15,8 +15,9 @@ matrix formats other than `markdown` fail before any input is read or output is
 written.
 
 Every `.json` file in the `init` actions directory must contain one JSON object
-with string `id`, `connector`, `action`, and `target` fields and a boolean
+with non-empty string `id`, `connector`, `action`, and `target` fields and a boolean
 `writes` field. `payload` is optional and must be a JSON object when present.
+Whitespace-only required strings are treated as empty.
 Manifests are read in filename order and all are validated before the output
 directory or file is created. A malformed manifest fails with status 1 and a
 deterministic diagnostic naming the source file and first invalid field.
@@ -49,11 +50,12 @@ any error-level issue is found, they print the same deterministic issue format
 as `validate`, exit with status 1, and do not emit a partial matrix. Warnings do
 not prevent rendering.
 
-The accepted fixture is a JSON object with string `schema`, `generatedFrom`,
+The accepted fixture is a JSON object with string `schema`, non-empty string `generatedFrom`,
 and `checksum` fields plus a `cases` array. Every case has string `id`,
 `connector`, `action`, `target`, and `rollback` fields; `risk` is `low`,
 `medium`, or `high`; `decision` is `allow`, `block`, or `escalate`;
-`approvalRequired` is boolean; and `payload` is an object. Missing or wrongly
+`approvalRequired` is boolean; and `payload` is an object. Required case strings
+must be non-empty after trimming. Missing, empty, or wrongly
 typed fields are reported as validation issues, without internal JavaScript
 errors, and cause exit status 1.
 
