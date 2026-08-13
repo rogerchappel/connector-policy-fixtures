@@ -100,6 +100,28 @@ test("init rejects malformed manifests without creating output", async () => {
   }
 });
 
+test("init rejects empty manifest fields without creating output", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "connector-policy-fixtures-"));
+  const manifests = join(dir, "actions");
+  try {
+    await mkdir(manifests);
+    for (const field of ["id", "connector", "action", "target"]) {
+      const out = join(dir, field, "policy-cases.json");
+      const manifest = { id: "read", connector: "test", action: "read", target: "item", writes: false };
+      manifest[field] = "   ";
+      await writeFile(join(manifests, "bad.json"), JSON.stringify(manifest));
+
+      const result = await runCli(["init", manifests, "--out", out]);
+      assert.equal(result.code, 1);
+      assert.equal(result.stdout, "");
+      assert.equal(result.stderr, `Invalid action manifest ${join(manifests, "bad.json")}: field ${field} must be a non-empty string.\n`);
+      await assert.rejects(access(out));
+    }
+  } finally {
+    await rm(dir, { force: true, recursive: true });
+  }
+});
+
 test("renders a markdown policy matrix through the CLI", async () => {
   const dir = await mkdtemp(join(tmpdir(), "connector-policy-fixtures-"));
   const out = join(dir, "policy-cases.json");
@@ -179,12 +201,36 @@ test("matrix and render reject invalid fixtures without emitting a matrix", asyn
   }
 });
 
-test("returns an error when approval cases lack rollback expectations", async () => {
+test("validate and matrix reject empty required fixture strings", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "connector-policy-fixtures-"));
+  const path = join(dir, "blank-fields.json");
+  try {
+    const init = await runCli(["init", actionsDir, "--out", path]);
+    assert.equal(init.code, 0);
+    const fixture = JSON.parse(await readFile(path, "utf8"));
+    fixture.generatedFrom = " ";
+    fixture.cases[0].connector = "";
+    await writeFile(path, `${JSON.stringify(fixture)}\n`);
+
+    for (const command of ["validate", "matrix"]) {
+      const result = await runCli([command, path]);
+      assert.equal(result.code, 1);
+      assert.equal(result.stdout, "");
+      assert.match(result.stderr, /Generated-from path must be a non-empty string/);
+      assert.match(result.stderr, /Case field connector must be a non-empty string/);
+      assert.doesNotMatch(result.stderr, /Connector Policy Matrix/);
+    }
+  } finally {
+    await rm(dir, { force: true, recursive: true });
+  }
+});
+
+test("returns an error when approval cases have empty rollback expectations", async () => {
   const result = await runCli(["validate", missingRollback]);
 
   assert.equal(result.code, 1);
   assert.equal(result.stdout, "");
-  assert.match(result.stderr, /write-escalate: Approval-required cases need rollback expectations/);
+  assert.match(result.stderr, /write-escalate: Case field rollback must be a non-empty string/);
 });
 
 test("reports fixture integrity failures through the CLI", async () => {
@@ -216,7 +262,7 @@ test("reports malformed fixture shapes without internal errors", async () => {
     for (const [name, fixture, expected] of [
       ["array.json", [], /Fixture must be a JSON object/],
       ["missing-cases.json", {}, /Cases must be an array/],
-      ["bad-case.json", { schema: "connector-policy-fixtures\/v1", checksum: "0000000000000000", cases: [{}] }, /Case field id must be a string/]
+      ["bad-case.json", { schema: "connector-policy-fixtures\/v1", checksum: "0000000000000000", cases: [{}] }, /Case field id must be a non-empty string/]
     ]) {
       const path = join(dir, name);
       await writeFile(path, `${JSON.stringify(fixture)}\n`);
