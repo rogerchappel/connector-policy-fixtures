@@ -99,8 +99,8 @@ export function validateFixture(fixture: unknown): ValidationIssue[] {
   if (fixture.schema !== FIXTURE_SCHEMA) {
     issues.push({ level: "error", caseId: "*", message: `Schema must be ${FIXTURE_SCHEMA}.` });
   }
-  if (typeof fixture.generatedFrom !== "string") {
-    issues.push({ level: "error", caseId: "*", message: "Generated-from path must be a string." });
+  if (!isNonEmptyString(fixture.generatedFrom)) {
+    issues.push({ level: "error", caseId: "*", message: "Generated-from path must be a non-empty string." });
   }
   if (typeof fixture.checksum !== "string" || !CHECKSUM_PATTERN.test(fixture.checksum)) {
     issues.push({ level: "error", caseId: "*", message: "Checksum must be 16 lowercase hexadecimal characters." });
@@ -156,7 +156,7 @@ export function validateFixture(fixture: unknown): ValidationIssue[] {
 }
 
 function validateCaseShape(value: unknown, index: number): ValidationIssue[] {
-  const caseId = isRecord(value) && typeof value.id === "string" ? value.id : `[${index}]`;
+  const caseId = isRecord(value) && isNonEmptyString(value.id) ? value.id : `[${index}]`;
   if (!isRecord(value)) {
     return [{ level: "error", caseId, message: "Case must be a JSON object." }];
   }
@@ -164,8 +164,8 @@ function validateCaseShape(value: unknown, index: number): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
   const stringFields = ["id", "connector", "action", "target", "rollback"] as const;
   for (const field of stringFields) {
-    if (typeof value[field] !== "string") {
-      issues.push({ level: "error", caseId, message: `Case field ${field} must be a string.` });
+    if (!isNonEmptyString(value[field])) {
+      issues.push({ level: "error", caseId, message: `Case field ${field} must be a non-empty string.` });
     }
   }
   if (!(["low", "medium", "high"] as unknown[]).includes(value.risk)) {
@@ -185,6 +185,10 @@ function validateCaseShape(value: unknown, index: number): ValidationIssue[] {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
 }
 
 export function renderMatrix(input: unknown): string {
@@ -259,8 +263,8 @@ function validateActionManifest(value: unknown, path: string): asserts value is 
   if (!isRecord(value)) throw new Error(`Invalid action manifest ${path}: manifest must be a JSON object.`);
 
   for (const field of ["id", "connector", "action", "target"] as const) {
-    if (typeof value[field] !== "string") {
-      throw new Error(`Invalid action manifest ${path}: field ${field} must be a string.`);
+    if (!isNonEmptyString(value[field])) {
+      throw new Error(`Invalid action manifest ${path}: field ${field} must be a non-empty string.`);
     }
   }
   if (typeof value.writes !== "boolean") {
