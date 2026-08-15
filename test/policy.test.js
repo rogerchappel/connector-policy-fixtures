@@ -36,6 +36,35 @@ test("adds deterministic decision coverage for homogeneous action manifests", ()
   }
 });
 
+test("rejects an actions directory with no JSON manifests", () => {
+  const dir = mkdtempSync(join(tmpdir(), "connector-policy-empty-"));
+  try {
+    assert.throws(
+      () => initFixture(dir),
+      (error) => error.message === `Actions directory contains no JSON manifests: ${dir}`
+    );
+  } finally {
+    rmSync(dir, { force: true, recursive: true });
+  }
+});
+
+test("rejects duplicate manifest IDs with deterministic file diagnostics", () => {
+  const dir = mkdtempSync(join(tmpdir(), "connector-policy-duplicates-"));
+  try {
+    const manifest = { id: "same", connector: "example", action: "read", target: "record", writes: false };
+    const first = join(dir, "a.json");
+    const second = join(dir, "b.json");
+    writeFileSync(second, JSON.stringify(manifest));
+    writeFileSync(first, JSON.stringify(manifest));
+    assert.throws(
+      () => initFixture(dir),
+      (error) => error.message === `Duplicate action manifest ID "same": ${first}, ${second}.`
+    );
+  } finally {
+    rmSync(dir, { force: true, recursive: true });
+  }
+});
+
 test("rejects malformed action manifests with deterministic file and field diagnostics", () => {
   const dir = mkdtempSync(join(tmpdir(), "connector-policy-manifests-"));
   try {
