@@ -243,10 +243,15 @@ function buildCases(manifest: ActionManifest): PolicyCase[] {
 
 function readManifests(dir: string): ActionManifest[] {
   if (!existsSync(dir)) throw new Error(`Actions directory not found: ${dir}`);
-  return readdirSync(dir)
+  const entries = readdirSync(dir)
     .filter((entry) => entry.endsWith(".json"))
-    .sort()
-    .map((entry) => {
+    .sort();
+  if (entries.length === 0) {
+    throw new Error(`Actions directory contains no JSON manifests: ${dir}`);
+  }
+
+  const manifestPaths = new Map<string, string>();
+  return entries.map((entry) => {
       const path = join(dir, entry);
       let value: unknown;
       try {
@@ -255,6 +260,11 @@ function readManifests(dir: string): ActionManifest[] {
         throw new Error(`Invalid action manifest ${path}: file must contain valid JSON.`);
       }
       validateActionManifest(value, path);
+      const previousPath = manifestPaths.get(value.id);
+      if (previousPath) {
+        throw new Error(`Duplicate action manifest ID "${value.id}": ${previousPath}, ${path}.`);
+      }
+      manifestPaths.set(value.id, path);
       return value;
     });
 }
