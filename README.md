@@ -26,6 +26,9 @@ Each `init` input must be a JSON object with non-empty string `id`, `connector`,
 are empty. An optional `payload` must be a
 JSON object. `init` validates every manifest before creating its output; an
 invalid manifest exits with status 1 and identifies its source file and field.
+The directory must contain at least one `.json` manifest, and every manifest
+`id` must be unique. Empty inputs and duplicate IDs fail before the output is
+created, with diagnostics naming the directory or conflicting ID and files.
 
 `init` always produces allow, block, and escalate decision coverage for a
 non-empty valid actions directory. When every manifest has the same `writes`
