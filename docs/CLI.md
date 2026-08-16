@@ -18,6 +18,9 @@ Every `.json` file in the `init` actions directory must contain one JSON object
 with non-empty string `id`, `connector`, `action`, and `target` fields and a boolean
 `writes` field. `payload` is optional and must be a JSON object when present.
 Whitespace-only required strings are treated as empty.
+The directory must contain at least one `.json` manifest, and manifest `id`
+values must be unique across the directory. Empty inputs and duplicate IDs fail
+with diagnostics naming the directory or conflicting ID and source files.
 Manifests are read in filename order and all are validated before the output
 directory or file is created. A malformed manifest fails with status 1 and a
 deterministic diagnostic naming the source file and first invalid field.

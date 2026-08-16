@@ -122,6 +122,34 @@ test("init rejects empty manifest fields without creating output", async () => {
   }
 });
 
+test("init rejects empty and duplicate-ID action directories without creating output", async () => {
+  for (const scenario of ["empty", "duplicate"]) {
+    const dir = await mkdtemp(join(tmpdir(), `connector-policy-${scenario}-`));
+    const manifests = join(dir, "actions");
+    const out = join(dir, "nested", "policy-cases.json");
+    try {
+      await mkdir(manifests);
+      let expected = `Actions directory contains no JSON manifests: ${manifests}\n`;
+      if (scenario === "duplicate") {
+        const manifest = { id: "same", connector: "example", action: "read", target: "record", writes: false };
+        const first = join(manifests, "a.json");
+        const second = join(manifests, "b.json");
+        await writeFile(first, JSON.stringify(manifest));
+        await writeFile(second, JSON.stringify(manifest));
+        expected = `Duplicate action manifest ID "same": ${first}, ${second}.\n`;
+      }
+
+      const result = await runCli(["init", manifests, "--out", out]);
+      assert.equal(result.code, 1);
+      assert.equal(result.stdout, "");
+      assert.equal(result.stderr, expected);
+      await assert.rejects(access(out));
+    } finally {
+      await rm(dir, { force: true, recursive: true });
+    }
+  }
+});
+
 test("renders a markdown policy matrix through the CLI", async () => {
   const dir = await mkdtemp(join(tmpdir(), "connector-policy-fixtures-"));
   const out = join(dir, "policy-cases.json");
