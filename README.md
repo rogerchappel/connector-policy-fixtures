@@ -44,7 +44,10 @@ The validation input must be a JSON object with string `schema`, non-empty strin
 and `checksum` fields plus a `cases` array. Each case requires string `id`, `connector`, `action`, `target`,
 and `rollback` fields, all of which must be non-empty; a `risk` of `low`, `medium`, or `high`; a `decision` of
 `allow`, `block`, or `escalate`; a boolean `approvalRequired`; and an object
-`payload`. Malformed shapes produce stable validation issues and exit status 1,
+`payload`. Allow cases must not require approval; block and escalate cases must
+require it. Markdown matrices escape pipe delimiters and normalize embedded
+newlines in rendered cells so valid fixture text cannot alter the table structure.
+Malformed shapes produce stable validation issues and exit status 1,
 rather than JavaScript type or iteration errors.
 
 ## Safety Notes
