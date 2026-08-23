@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -10,6 +11,41 @@ test("generates policy cases from local manifests", () => {
   assert.equal(fixture.cases.length, 6);
   assert.equal(validateFixture(fixture).filter((issue) => issue.level === "error").length, 0);
   assert.match(renderMatrix(fixture), /Connector Policy Matrix/);
+});
+
+test("enforces the decision approval invariant", () => {
+  const fixture = initFixture("test/fixtures/actions");
+  for (const [decision, approvalRequired, expected] of [
+    ["allow", true, "Allow cases must not require approval."],
+    ["block", false, "Block cases must require approval."],
+    ["escalate", false, "Escalate cases must require approval."]
+  ]) {
+    const cases = fixture.cases.map((item) => item.decision === decision ? { ...item, approvalRequired } : item);
+    const invalid = { ...fixture, cases, checksum: createHash("sha256").update(JSON.stringify(cases)).digest("hex").slice(0, 16) };
+    assert.ok(validateFixture(invalid).some((issue) => issue.message === expected));
+    assert.throws(() => renderMatrix(invalid), new RegExp(expected.replace(/[.]/g, "\\.")));
+  }
+});
+
+test("escapes delimiters and normalizes newlines in every markdown cell", () => {
+  const fixture = initFixture("test/fixtures/actions");
+  const cases = fixture.cases.map((item, index) => index === 0 ? {
+    ...item,
+    id: "case|one",
+    connector: "con\nector",
+    action: "read|write",
+    target: "line one\nline two",
+    rollback: "undo|again"
+  } : item);
+  const valid = { ...fixture, cases, checksum: createHash("sha256").update(JSON.stringify(cases)).digest("hex").slice(0, 16) };
+  const matrix = renderMatrix(valid);
+  const row = matrix.split("\n").find((line) => line.includes("case\\|one"));
+  assert.ok(row);
+  assert.equal(row.match(/(?<!\\)\|/g).length, 9);
+  assert.match(row, /con ector/);
+  assert.match(row, /read\\\|write/);
+  assert.match(row, /line one line two/);
+  assert.match(row, /undo\\\|again/);
 });
 
 test("adds deterministic decision coverage for homogeneous action manifests", () => {

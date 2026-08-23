@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { execFile } from "node:child_process";
 import { access, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -223,6 +224,27 @@ test("matrix and render reject invalid fixtures without emitting a matrix", asyn
         assert.match(result.stderr, /^error: /);
         assert.doesNotMatch(result.stderr, /TypeError|Connector Policy Matrix/);
       }
+    }
+  } finally {
+    await rm(dir, { force: true, recursive: true });
+  }
+});
+
+test("validate and matrix reject inconsistent decision approvals", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "connector-policy-fixtures-"));
+  const path = join(dir, "inconsistent-approval.json");
+  try {
+    assert.equal((await runCli(["init", actionsDir, "--out", path])).code, 0);
+    const fixture = JSON.parse(await readFile(path, "utf8"));
+    fixture.cases = fixture.cases.map((item) => item.decision === "allow" ? { ...item, approvalRequired: true } : item);
+    fixture.checksum = createHash("sha256").update(JSON.stringify(fixture.cases)).digest("hex").slice(0, 16);
+    await writeFile(path, `${JSON.stringify(fixture)}\n`);
+
+    for (const command of ["validate", "matrix"]) {
+      const result = await runCli([command, path]);
+      assert.equal(result.code, 1);
+      assert.equal(result.stdout, "");
+      assert.match(result.stderr, /Allow cases must not require approval/);
     }
   } finally {
     await rm(dir, { force: true, recursive: true });
