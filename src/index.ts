@@ -128,6 +128,12 @@ export function validateFixture(fixture: unknown): ValidationIssue[] {
   const seenCaseIds = new Set<string>();
   const reportedDuplicateIds = new Set<string>();
   for (const item of cases) {
+    if (item.decision === "allow" && item.approvalRequired) {
+      issues.push({ level: "error", caseId: item.id, message: "Allow cases must not require approval." });
+    }
+    if ((item.decision === "block" || item.decision === "escalate") && !item.approvalRequired) {
+      issues.push({ level: "error", caseId: item.id, message: `${capitalize(item.decision)} cases must require approval.` });
+    }
     if (seenCaseIds.has(item.id) && !reportedDuplicateIds.has(item.id)) {
       issues.push({ level: "error", caseId: item.id, message: "Duplicate case ID." });
       reportedDuplicateIds.add(item.id);
@@ -198,7 +204,8 @@ export function renderMatrix(input: unknown): string {
   }
   const fixture = input as PolicyFixture;
   const rows = fixture.cases.map((item) => {
-    return `| ${item.id} | ${item.connector} | ${item.action} | ${item.target} | ${item.risk} | ${item.decision} | ${item.approvalRequired ? "yes" : "no"} | ${item.rollback || "-"} |`;
+    const fields = [item.id, item.connector, item.action, item.target, item.risk, item.decision, item.approvalRequired ? "yes" : "no", item.rollback || "-"];
+    return `| ${fields.map(markdownCell).join(" | ")} |`;
   });
   return [
     "# Connector Policy Matrix",
@@ -211,6 +218,14 @@ export function renderMatrix(input: unknown): string {
     ...rows,
     ""
   ].join("\n");
+}
+
+function markdownCell(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/\|/g, "\\|").replace(/\r?\n|\r/g, " ");
+}
+
+function capitalize(value: string): string {
+  return value[0].toUpperCase() + value.slice(1);
 }
 
 function buildCases(manifest: ActionManifest): PolicyCase[] {
