@@ -83,6 +83,38 @@ test("initializes immediately valid fixtures for homogeneous action directories"
   }
 });
 
+test("init writes deterministic valid output when coverage IDs collide", async () => {
+  for (const writes of [false, true]) {
+    const dir = await mkdtemp(join(tmpdir(), "connector-policy-coverage-ids-"));
+    const manifests = join(dir, "actions");
+    const firstOut = join(dir, "first.json");
+    const secondOut = join(dir, "second.json");
+    try {
+      await mkdir(manifests);
+      for (const [file, id] of [["a.json", "x"], ["b.json", "x-coverage"]]) {
+        await writeFile(join(manifests, file), JSON.stringify({
+          id,
+          connector: "example",
+          action: writes ? "update" : "read",
+          target: "record",
+          writes
+        }));
+      }
+
+      assert.equal((await runCli(["init", manifests, "--out", firstOut])).code, 0);
+      assert.equal((await runCli(["init", manifests, "--out", secondOut])).code, 0);
+      assert.equal(await readFile(secondOut, "utf8"), await readFile(firstOut, "utf8"));
+
+      const validate = await runCli(["validate", firstOut]);
+      assert.equal(validate.code, 0);
+      assert.match(validate.stdout, /Policy fixture valid: 5 cases/);
+      assert.equal(validate.stderr, "");
+    } finally {
+      await rm(dir, { force: true, recursive: true });
+    }
+  }
+});
+
 test("init rejects malformed manifests without creating output", async () => {
   const dir = await mkdtemp(join(tmpdir(), "connector-policy-fixtures-"));
   const manifests = join(dir, "actions");
