@@ -72,6 +72,32 @@ test("adds deterministic decision coverage for homogeneous action manifests", ()
   }
 });
 
+test("keeps generated coverage IDs unique when manifest IDs share the coverage prefix", () => {
+  for (const [writes, decision] of [[false, "escalate"], [true, "allow"]]) {
+    const dir = mkdtempSync(join(tmpdir(), "connector-policy-coverage-ids-"));
+    try {
+      for (const [file, id] of [["a.json", "x"], ["b.json", "x-coverage"]]) {
+        writeFileSync(join(dir, file), JSON.stringify({
+          id,
+          connector: "example",
+          action: writes ? "update" : "read",
+          target: "record",
+          writes
+        }));
+      }
+
+      const first = initFixture(dir);
+      assert.deepEqual(initFixture(dir), first);
+      assert.equal(validateFixture(first).filter((issue) => issue.level === "error").length, 0);
+      assert.equal(new Set(first.cases.map((item) => item.id)).size, first.cases.length);
+      const expectedId = writes ? `x-coverage-${decision}-2` : `x-coverage-${decision}`;
+      assert.ok(first.cases.some((item) => item.id === expectedId));
+    } finally {
+      rmSync(dir, { force: true, recursive: true });
+    }
+  }
+});
+
 test("rejects an actions directory with no JSON manifests", () => {
   const dir = mkdtempSync(join(tmpdir(), "connector-policy-empty-"));
   try {
