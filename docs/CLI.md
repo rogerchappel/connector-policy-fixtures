@@ -28,8 +28,10 @@ deterministic diagnostic naming the source file and first invalid field.
 For every non-empty valid actions directory, `init` guarantees the decision
 coverage required by `validate`: allow, block, and escalate. A homogeneous
 directory receives one deterministic aggregate coverage case for its missing
-allow or escalate decision. Mixed read/write inputs retain the normal two
-cases per manifest without an aggregate case.
+allow or escalate decision. A generated coverage ID that collides with a
+manifest-derived case receives the first available numeric suffix starting at
+`-2`. Mixed read/write inputs retain the normal two cases per manifest without
+an aggregate case.
 
 Fixture-backed smoke commands:
 

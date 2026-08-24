@@ -33,7 +33,9 @@ created, with diagnostics naming the directory or conflicting ID and files.
 `init` always produces allow, block, and escalate decision coverage for a
 non-empty valid actions directory. When every manifest has the same `writes`
 value, it appends one deterministic `coverage-allow` or `coverage-escalate`
-case; mixed read/write directories keep their existing per-manifest cases.
+case. If that generated ID is already used by a manifest-derived case, `init`
+appends the first available numeric suffix starting at `-2`. Mixed read/write
+directories keep their existing per-manifest cases.
 The generated fixture is therefore ready for an immediate `validate` command.
 
 Fixtures include a checksum of their `cases` array. If cases are edited, regenerate
