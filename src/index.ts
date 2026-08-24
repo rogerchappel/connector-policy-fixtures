@@ -69,15 +69,19 @@ export function initFixture(actionsDir: string): PolicyFixture {
 function ensureDecisionCoverage(cases: PolicyCase[], manifest: ActionManifest | undefined): PolicyCase[] {
   if (!manifest) return cases;
   const decisions = new Set(cases.map((item) => item.decision));
-  if (!decisions.has("allow")) return [...cases, buildCoverageCase(manifest, "allow")];
-  if (!decisions.has("escalate")) return [...cases, buildCoverageCase(manifest, "escalate")];
+  if (!decisions.has("allow")) return [...cases, buildCoverageCase(manifest, "allow", cases)];
+  if (!decisions.has("escalate")) return [...cases, buildCoverageCase(manifest, "escalate", cases)];
   return cases;
 }
 
-function buildCoverageCase(manifest: ActionManifest, decision: "allow" | "escalate"): PolicyCase {
+function buildCoverageCase(
+  manifest: ActionManifest,
+  decision: "allow" | "escalate",
+  existingCases: PolicyCase[]
+): PolicyCase {
   const approvalRequired = decision === "escalate";
   return {
-    id: `${manifest.id}-coverage-${decision}`,
+    id: uniqueCaseId(`${manifest.id}-coverage-${decision}`, existingCases),
     connector: manifest.connector,
     action: manifest.action,
     target: manifest.target,
@@ -89,6 +93,14 @@ function buildCoverageCase(manifest: ActionManifest, decision: "allow" | "escala
       : manifest.writes ? "Restore the prior field value after the allowed test case." : "No external write.",
     payload: manifest.payload ?? {}
   };
+}
+
+function uniqueCaseId(base: string, existingCases: PolicyCase[]): string {
+  const existingIds = new Set(existingCases.map((item) => item.id));
+  if (!existingIds.has(base)) return base;
+  let suffix = 2;
+  while (existingIds.has(`${base}-${suffix}`)) suffix += 1;
+  return `${base}-${suffix}`;
 }
 
 export function validateFixture(fixture: unknown): ValidationIssue[] {
