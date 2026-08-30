@@ -313,7 +313,7 @@ function validateActionManifest(value: unknown, path: string): asserts value is 
 }
 
 function isBroadTarget(target: string): boolean {
-  return ["*", "all", "workspace", "everyone"].includes(target.toLowerCase());
+  return /^(?:\*|[@#]?(?:all|all-hands|workspace|everyone|org|organization))$/i.test(target.trim());
 }
 
 function hasSecretLikeValue(value: unknown): boolean {
