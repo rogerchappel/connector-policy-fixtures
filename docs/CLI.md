@@ -50,6 +50,12 @@ rollback expectations, broad targets, and secret-looking values.
 The decision coverage invariant requires at least one allow, one block, and
 one escalate case across the fixture.
 
+Broad targets are matched case-insensitively after trimming surrounding
+whitespace. Recognized whole-target forms are `*`, `all`, `all-hands`,
+`workspace`, `everyone`, `org`, and `organization`; the word forms may use an
+`@` or `#` prefix (for example, `@everyone` or `#all-hands`). These words do
+not match when embedded in a longer identifier.
+
 `matrix` and its `render` alias run the same validation before rendering. If
 any error-level issue is found, they print the same deterministic issue format
 as `validate`, exit with status 1, and do not emit a partial matrix. Warnings do
