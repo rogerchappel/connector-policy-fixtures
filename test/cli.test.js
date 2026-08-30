@@ -54,6 +54,30 @@ test("initializes and validates policy cases through the CLI", async () => {
   }
 });
 
+test("init and validate warn when a read manifest targets @everyone", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "connector-policy-broad-target-"));
+  const manifests = join(dir, "actions");
+  const out = join(dir, "policy-cases.json");
+  try {
+    await mkdir(manifests);
+    await writeFile(join(manifests, "broadcast.json"), JSON.stringify({
+      id: "broadcast-read",
+      connector: "chat",
+      action: "read",
+      target: "@everyone",
+      writes: false
+    }));
+
+    assert.equal((await runCli(["init", manifests, "--out", out])).code, 0);
+    const validate = await runCli(["validate", out]);
+    assert.equal(validate.code, 0);
+    assert.equal(validate.stdout, "");
+    assert.match(validate.stderr, /warning: broadcast-read-allow: Broad target is allowed; consider escalation\./);
+  } finally {
+    await rm(dir, { force: true, recursive: true });
+  }
+});
+
 test("initializes immediately valid fixtures for homogeneous action directories", async () => {
   for (const writes of [false, true]) {
     const dir = await mkdtemp(join(tmpdir(), "connector-policy-homogeneous-"));
