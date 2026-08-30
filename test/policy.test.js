@@ -186,6 +186,25 @@ test("flags secret-looking payloads", () => {
   assert.ok(issues.some((issue) => issue.message.includes("secret-looking")));
 });
 
+test("normalizes broad targets without matching identifier substrings", () => {
+  const fixture = initFixture("test/fixtures/actions");
+  const base = fixture.cases.find((item) => item.decision === "allow");
+
+  for (const target of [" * ", "ALL", " workspace ", "@everyone", "#all-hands", "org", " organization "]) {
+    const cases = fixture.cases.map((item) => item === base ? { ...item, target } : item);
+    const checksum = createHash("sha256").update(JSON.stringify(cases)).digest("hex").slice(0, 16);
+    const issues = validateFixture({ ...fixture, cases, checksum });
+    assert.ok(issues.some((issue) => issue.caseId === base.id && issue.message === "Broad target is allowed; consider escalation."), target);
+  }
+
+  for (const target of ["everyone-report", "myorganization", "org.example", "@everyone_else", "#all-hands-archive"]) {
+    const cases = fixture.cases.map((item) => item === base ? { ...item, target } : item);
+    const checksum = createHash("sha256").update(JSON.stringify(cases)).digest("hex").slice(0, 16);
+    const issues = validateFixture({ ...fixture, cases, checksum });
+    assert.ok(!issues.some((issue) => issue.caseId === base.id && issue.message.startsWith("Broad target")), target);
+  }
+});
+
 test("rejects an unsupported or missing fixture schema", () => {
   const fixture = initFixture("test/fixtures/actions");
 
