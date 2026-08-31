@@ -2,6 +2,12 @@
 
 `connector-policy-fixtures` generates and validates offline policy cases for connector action approvals. It helps agents test allow, block, and escalate decisions before any external write is attempted.
 
+## Node.js support
+
+Node.js 18 or newer is supported. CI runs the complete release-readiness gate with
+the minimum supported release (Node.js 18) and a current release (Node.js 24),
+using the frozen npm lockfile on both.
+
 ## Quickstart
 
 ```bash
