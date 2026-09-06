@@ -71,7 +71,10 @@ npm pack --dry-run
 
 The release check runs type checks, tests, fixture smoke coverage, validation,
 and a package smoke that asserts the CLI, docs, README, license, and security
-policy are present in the npm tarball.
+policy are present in the npm tarball. Packaging does not depend on a pre-existing
+`dist` directory: npm's `prepack` lifecycle builds the CLI automatically. The
+package smoke recreates a clean checkout, installs from the lockfile, packs it,
+extracts the tarball, and invokes the declared binary with `--help`.
 
 CI runs the same `npm run release:check` gate for pull requests and pushes to `main`.
 
