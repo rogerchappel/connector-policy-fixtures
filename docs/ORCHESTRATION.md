@@ -18,3 +18,9 @@ This project is local-first. Agents must not publish packages, tag releases, cal
 - `npm run build`
 - `npm run smoke`
 - `bash scripts/validate.sh`
+
+## Optional PR comment snippet format
+
+The optional machine-readable snippet contract is documented in
+[`PR_COMMENT_SNIPPETS.md`](PR_COMMENT_SNIPPETS.md). Any such output is inert text;
+it is never posted remotely by this tool. The current CLI does not yet emit it.

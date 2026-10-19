@@ -14,3 +14,4 @@
 - [ ] Add more fixture dialects from public examples.
 - [ ] Emit SARIF or check-run compatible output.
 - [ ] Add optional machine-readable PR comment snippets.
+  - [x] Define a deterministic JSON snippet contract and safe, non-posting boundary.
